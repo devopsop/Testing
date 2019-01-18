@@ -75,11 +75,10 @@ npm publish
         environmentVariables {
             propertiesFile('versionfile')
         }
-        httpRequest('https://nexus.wada-ama.org/service/rest/beta/search?q=${TESTCENTER_API_VERSION}&repository=ADAMS-Snapshots&group=com.cgi&name=testcenter-api') {
+        httpRequest {
+            url('https://nexus.wada-ama.org/service/rest/beta/search?q=${TESTCENTER_API_VERSION}&repository=ADAMS-Snapshots&group=com.cgi&name=testcenter-api')
             httpMode('GET')
             authentication('5f71b8c2-4ced-45aa-9da9-014c32323dec')
-            returnCodeBuildRelevant()
-            logResponseBody()
             outputFile('nexus.log')
         }
         shell('''
