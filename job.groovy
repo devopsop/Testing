@@ -83,7 +83,7 @@ npm publish
             outputFile('nexus.log')
         }
         shell('''
-if cat nexus.log | grep '"items" : \[ \],'
+if cat nexus.log | grep '"items" : \\[ \\],'
 then
 	echo "TESTCENTER_API_VERSION=${TESTCENTER_API_VERSION}-RELEASE" > versionfile
     echo "NEXUS_CLASSIFIER=RELEASE" >> versionfile
