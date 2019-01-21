@@ -1,5 +1,5 @@
-def curJob = job('TESTCENTER-API_BUILD') {
-    description('Job to build testcenter-api')
+def curJob = job('TESTCENTER-WEB_BUILD') {
+    description('Job to build testcenter-web')
 
     // We only keep the last 30 builds
     logRotator {
@@ -15,7 +15,7 @@ def curJob = job('TESTCENTER-API_BUILD') {
         git {
             branch('refs/heads/${branch}')
             remote {
-                url('https://bitbucket.wada-ama.org/scm/adams-ng/testcenter-api.git')
+                url('https://bitbucket.wada-ama.org/scm/adams-ng/testcenter-web.git')
                 //Credentials for the build_agent user
                 credentials('003f5c19-50c1-4ae3-a296-f23e630c2bb4')
             }
@@ -53,30 +53,28 @@ def curJob = job('TESTCENTER-API_BUILD') {
         configFiles {
             //npmrc settings
             file('700b68f6-df2b-4c6a-b8b0-697abc114d2b') {
-                targetLocation('.npmrc')
+                targetLocation('server/.npmrc')
             }
         }
     }
     steps {
         shell('''
-TESTCENTER_API_VERSION=$(cat package.json \\
+cd server
+TESTCENTER_WEB_VERSION=$(cat package.json \\
   | grep version \\
   | head -1 \\
   | awk -F: '{ print $2 }' \\
   | sed 's/[",]//g' \\
   | tr -d '[[:space:]]')
-echo "TESTCENTER_API_VERSION=${TESTCENTER_API_VERSION}" > versionfile
-npm config list
-npm --no-git-tag-version version $TESTCENTER_API_VERSION-$RELEASE_BUILD_NUMBER
-npm install
-npm run bundle
-npm publish
+echo "TESTCENTER_WEB_VERSION=${TESTCENTER_WEB_VERSION}" > versionfile
+npm --no-git-tag-version version $TESTCENTER_WEB_VERSION-$RELEASE_BUILD_NUMBER
+sh ./build-deploy.sh
 ''')
         environmentVariables {
             propertiesFile('versionfile')
         }
         httpRequest {
-            url('https://nexus.wada-ama.org/service/rest/beta/search?q=${TESTCENTER_API_VERSION}&repository=ADAMS-Snapshots&group=com.cgi&name=testcenter-api')
+            url('https://nexus.wada-ama.org/service/rest/beta/search?q=${TESTCENTER_WEB_VERSION}&repository=ADAMS-Snapshots&group=com.cgi&name=testcenter-webserver')
             httpMode('GET')
             authentication('5f71b8c2-4ced-45aa-9da9-014c32323dec')
             outputFile('nexus.log')
@@ -84,10 +82,10 @@ npm publish
         shell('''
 if cat nexus.log | grep '"items" : \\[ \\],'
 then
-	echo "TESTCENTER_API_VERSION=${TESTCENTER_API_VERSION}-RELEASE" > versionfile
+	echo "TESTCENTER_WEB_VERSION=${TESTCENTER_WEB_VERSION}-RELEASE" > versionfile
     echo "NEXUS_CLASSIFIER=RELEASE" >> versionfile
 else
-	echo "TESTCENTER_API_VERSION=${TESTCENTER_API_VERSION}" > versionfile
+	echo "TESTCENTER_WEB_VERSION=${TESTCENTER_WEB_VERSION}" > versionfile
     echo "NEXUS_CLASSIFIER=SNAPSHOT" >> versionfile
 fi
 ''')
@@ -99,14 +97,14 @@ fi
             protocol('https')
             nexusUrl('nexus.wada-ama.org')
             groupId('com.cgi')
-            version('${TESTCENTER_API_VERSION}-SNAPSHOT')
+            version('${TESTCENTER_WEB_VERSION}-SNAPSHOT')
             repository('ADAMS-Snapshots')
             credentialsId('003f5c19-50c1-4ae3-a296-f23e630c2bb4')
             artifact {
-                artifactId('testcenter-api')
+                artifactId('testcenter-webserver')
                 type('zip')
                 classifier('${NEXUS_CLASSIFIER}')
-                file('testcenter-api.zip')
+                file('server/testcenter-webserver.zip')
             }
         }
     }
