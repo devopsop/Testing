@@ -165,7 +165,7 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
             trigger('Create-JIRA-ticket-ADAMS') {
                 condition('SUCCESS')
                 parameters {
-                    predefinedProp('DEPLOY_VERSION', '$DEPLOY_VERSION'
+                    predefinedProp('DEPLOY_VERSION', '$DEPLOY_VERSION')
                     predefinedProp('deployPath', '$deployPath')
                     predefinedProp('sqlVersion', '$sqlVersion')
                     predefinedProp('mobileVersion', '$mobileVersion')
@@ -180,3 +180,4 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
     }
 
 }
+
