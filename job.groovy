@@ -1,4 +1,4 @@
-def curJob = job('ADAMS_BUILD_CGI') {
+def curJob = job('ADAMS_BUILD_CGI_MERGED') {
     description('Job to build ADAMS for CGI integration pipeline')
 
     // We only keep the last 30 builds
@@ -118,7 +118,7 @@ def result= (fileContents =~ /Uploaded to nexus:\\s.+\\.ear/)
 def sonarRes = (fileContents =~ /\\[INFO\\] ANALYSIS SUCCESSFUL,\\s.*/)
 
 if (result.getCount() != 0) {
-  dep = (result[0] =~ /http.*ear/)[0].split('/')[10]
+  dep = (result[0] =~ /http.*\\.ear/)[0].split('/')[10]
   vers = (result[0] =~ /http.*\\.ear/)[0].split('/')[9]
 } else {
   dep = "Error"
@@ -159,10 +159,6 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
             teams('')
             uploadExcludesPattern('')
             uploadIncludesPattern('.repository/**/*.ear')
-            vid('')
-            vkey('')
-            vpassword('')
-            vuser('')
         }
         downstreamParameterized {
             trigger('Create-JIRA-ticket-ADAMS') {
