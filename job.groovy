@@ -80,30 +80,31 @@ return [
 "POM_ARTIFACTID": project.artifactId.toString(),
 ]''')
         }
-        withSonarQubeEnv('sonarqube')
     }
 
     steps {
-        maven {
-            goals('clean')
-            goals('deploy')
-            goals('sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.branch=$branch')
-            mavenInstallation('maven 3.3.9')
-            injectBuildVariables(false)
-            localRepository(LocalRepositoryLocation.LOCAL_TO_WORKSPACE)
-            property('wada.scm.commitId', '${GIT_COMMIT}')
-            property('wada.scm.branch', '${GIT_BRANCH}')
-            property('wada.scm.tag', 'builds/${POM_VERSION}-${RELEASE_BUILD_NUMBER}')
-            property('wada.build.number', '${RELEASE_BUILD_NUMBER}')
-            property('wada.build.timestamp', '${BUILD_TIMESTAMP}')
-            property('wada.build.user', '${BUILD_USER}')
-            property('build.jobName', '${JOB_NAME}')
-            property('sign.keystore','${sign.keystore}')
-            property('sign.storepass','${sign.storepass}')
-            property('sign.alias','${sign.alias}')
-            property('sign.keypass','${sign.keypass}')
-            //Same settings a adams
-            providedSettings('59d605db-7b8a-47c3-b220-6af4dc4facf0')
+        withSonarQubeEnv('sonarqube') {
+            maven {
+                goals('clean')
+                goals('deploy')
+                goals('sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.branch=$branch')
+                mavenInstallation('maven 3.3.9')
+                injectBuildVariables(false)
+                localRepository(LocalRepositoryLocation.LOCAL_TO_WORKSPACE)
+                property('wada.scm.commitId', '${GIT_COMMIT}')
+                property('wada.scm.branch', '${GIT_BRANCH}')
+                property('wada.scm.tag', 'builds/${POM_VERSION}-${RELEASE_BUILD_NUMBER}')
+                property('wada.build.number', '${RELEASE_BUILD_NUMBER}')
+                property('wada.build.timestamp', '${BUILD_TIMESTAMP}')
+                property('wada.build.user', '${BUILD_USER}')
+                property('build.jobName', '${JOB_NAME}')
+                property('sign.keystore','${sign.keystore}')
+                property('sign.storepass','${sign.storepass}')
+                property('sign.alias','${sign.alias}')
+                property('sign.keypass','${sign.keypass}')
+                //Same settings a adams
+                providedSettings('59d605db-7b8a-47c3-b220-6af4dc4facf0')
+            }
         }
     }
     publishers {
@@ -180,4 +181,3 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
     }
 
 }
-
