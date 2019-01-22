@@ -147,18 +147,22 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
                         'Built by ${BUILD_USER}')
             }
         }
-        veracode {
-            applicationName('ADAMS Build')
-            criticality('Medium')
-            fileNamePattern('')
-            replacementPattern('')
-            sandboxName('')
-            scanExcludesPattern('')
-            scanIncludesPattern('')
-            scanName('ADAMS Build: $RELEASE_BUILD_NUMBER')
-            teams('')
-            uploadExcludesPattern('')
-            uploadIncludesPattern('.repository/**/*.ear')
+        withCredentials([usernamePassword(credentialsId: 'veracode-id', passwordVariable: 'veracode-key', usernameVariable: 'veracode-user')]) {
+            veracode {
+                applicationName('ADAMS Build')
+                criticality('Medium')
+                fileNamePattern('')
+                replacementPattern('')
+                sandboxName('')
+                scanExcludesPattern('')
+                scanIncludesPattern('')
+                scanName('ADAMS Build: $RELEASE_BUILD_NUMBER')
+                teams('')
+                uploadExcludesPattern('')
+                uploadIncludesPattern('.repository/**/*.ear')
+                vid('veracode-user')
+                vkey('veracode-key')
+            }
         }
         downstreamParameterized {
             trigger('Create-JIRA-ticket-ADAMS') {
