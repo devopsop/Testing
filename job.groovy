@@ -111,12 +111,12 @@ return [
 import hudson.model.Environment
 
 fileContents = manager.build.logFile.text
-def result= (fileContents =~ /Uploaded to nexus:\s.+\.ear/)
-def sonarRes = (fileContents =~ /\[INFO\] ANALYSIS SUCCESSFUL,\s.*/)
+def result= (fileContents =~ /Uploaded to nexus:\\s.+\\.ear/)
+def sonarRes = (fileContents =~ /\\[INFO\\] ANALYSIS SUCCESSFUL,\\s.*/)
 
 if (result.getCount() != 0) {
   dep = (result[0] =~ /http.*ear/)[0].split('/')[10]
-  vers = (result[0] =~ /http.*\.ear/)[0].split('/')[9]
+  vers = (result[0] =~ /http.*\\.ear/)[0].split('/')[9]
 } else {
   dep = "Error"
   vers = "Error"
