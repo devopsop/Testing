@@ -160,8 +160,11 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
                 teams('')
                 uploadExcludesPattern('')
                 uploadIncludesPattern('.repository/**/*.ear')
+                useIDkey(true)
                 vid('veracode-user')
                 vkey('veracode-key')
+                vpassword('')
+                vuser('')
             }
         }
         downstreamParameterized {
