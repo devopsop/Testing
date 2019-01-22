@@ -63,6 +63,7 @@ def curJob = job('ADAMS_BUILD_CGI_MERGED') {
             file('sign.keystore', 'af841b34-805b-440f-95d5-db599dafbb5d')
             usernamePassword('na', 'sign.storepass','326fc163-7b3a-48a3-b251-eb52466d9c80')
             usernamePassword('sign.alias', 'sign.keypass','cf02ce35-7ce5-4f37-aed2-a37073b69732')
+            usernamePassword('veracode-user', 'veracode-key','veracode-id')
         }
         environmentVariables {
             groovy('''import jenkins.util.*;
@@ -147,25 +148,23 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
                         'Built by ${BUILD_USER}')
             }
         }
-        withCredentials([usernamePassword(credentialsId: 'veracode-id', passwordVariable: 'veracode-key', usernameVariable: 'veracode-user')]) {
-            veracode {
-                applicationName('ADAMS Build')
-                criticality('Medium')
-                fileNamePattern('')
-                replacementPattern('')
-                sandboxName('')
-                scanExcludesPattern('')
-                scanIncludesPattern('')
-                scanName('ADAMS Build: $RELEASE_BUILD_NUMBER')
-                teams('')
-                uploadExcludesPattern('')
-                uploadIncludesPattern('.repository/**/*.ear')
-                useIDkey(true)
-                vid('veracode-user')
-                vkey('veracode-key')
-                vpassword('')
-                vuser('')
-            }
+        veracode {
+            applicationName('ADAMS Build')
+            criticality('Medium')
+            fileNamePattern('')
+            replacementPattern('')
+            sandboxName('')
+            scanExcludesPattern('')
+            scanIncludesPattern('')
+            scanName('ADAMS Build: $RELEASE_BUILD_NUMBER')
+            teams('')
+            uploadExcludesPattern('')
+            uploadIncludesPattern('.repository/**/*.ear')
+            useIDkey(true)
+            vid('veracode-user')
+            vkey('veracode-key')
+            vpassword('')
+            vuser('')
         }
         downstreamParameterized {
             trigger('Create-JIRA-ticket-ADAMS') {
