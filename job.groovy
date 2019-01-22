@@ -43,7 +43,7 @@ def curJob = job('ADAMS_BUILD_CGI') {
             oBuildsAllTime
             worstResultForIncrement 'NOT_BUILT'
             skipFailedBuilds
-            useAsBuildDisplayName()
+            useAsBuildDisplayName(true)
         }
 
     }
