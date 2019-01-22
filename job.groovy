@@ -1,5 +1,5 @@
-def curJob = job('TESTCENTER-WEB_BUILD') {
-    description('Job to build testcenter-web')
+def curJob = job('ADAMS_BUILD_CGI') {
+    description('Job to build ADAMS for CGI integration pipeline')
 
     // We only keep the last 30 builds
     logRotator {
@@ -15,7 +15,7 @@ def curJob = job('TESTCENTER-WEB_BUILD') {
         git {
             branch('refs/heads/${branch}')
             remote {
-                url('https://bitbucket.wada-ama.org/scm/adams-ng/testcenter-web.git')
+                url('https://bitbucket.wada-ama.org/scm/adams/adams-cgi.git')
                 //Credentials for the build_agent user
                 credentials('003f5c19-50c1-4ae3-a296-f23e630c2bb4')
             }
@@ -48,63 +48,133 @@ def curJob = job('TESTCENTER-WEB_BUILD') {
 
     }
 
-
     wrappers {
         configFiles {
-            //npmrc settings
-            file('700b68f6-df2b-4c6a-b8b0-697abc114d2b') {
-                targetLocation('server/.npmrc')
+            //Adams maven Settings
+            file('a441713c-efba-4256-b01c-2c802a45c423') {
+                targetLocation('.mvn/maven.config')
+            }
+            //JVM config
+            file('fa4c4c5b-29b3-46f1-8cd8-5b83b07f491c') {
+                targetLocation('.mvn/jvm.config')
             }
         }
+        credentialsBinding {
+            file('sign.keystore', 'af841b34-805b-440f-95d5-db599dafbb5d')
+            usernamePassword('na', 'sign.storepass','326fc163-7b3a-48a3-b251-eb52466d9c80')
+            usernamePassword('sign.alias', 'sign.keypass','cf02ce35-7ce5-4f37-aed2-a37073b69732')
+        }
+        environmentVariables {
+            groovy('''import jenkins.util.*;
+import jenkins.model.*;
+
+def thr = Thread.currentThread();
+def currentBuild = thr?.executable;
+def workspace = currentBuild.getModuleRoot().absolutize().toString();
+
+def project = new XmlSlurper().parse(new File("$workspace/adams_superpom/pom.xml"))
+
+return [
+"POM_VERSION": project.version.toString(), 
+"POM_GROUPID": project.groupId.toString(),
+"POM_ARTIFACTID": project.artifactId.toString(),
+]''')
+        }
+        withSonarQubeEnv('sonarqube')
     }
+
     steps {
-        shell('''
-cd server
-TESTCENTER_WEB_VERSION=$(cat package.json \\
-  | grep version \\
-  | head -1 \\
-  | awk -F: '{ print $2 }' \\
-  | sed 's/[",]//g' \\
-  | tr -d '[[:space:]]')
-echo "TESTCENTER_WEB_VERSION=${TESTCENTER_WEB_VERSION}" > versionfile
-npm --no-git-tag-version version $TESTCENTER_WEB_VERSION-$RELEASE_BUILD_NUMBER
-sh ./build-deploy.sh
-''')
-        environmentVariables {
-            propertiesFile('versionfile')
+        maven {
+            goals('clean')
+            goals('deploy')
+            goals('sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.branch=$branch')
+            mavenInstallation('maven 3.3.9')
+            injectBuildVariables(false)
+            localRepository(LocalRepositoryLocation.LOCAL_TO_WORKSPACE)
+            property('wada.scm.commitId', '${GIT_COMMIT}')
+            property('wada.scm.branch', '${GIT_BRANCH}')
+            property('wada.scm.tag', 'builds/${POM_VERSION}-${RELEASE_BUILD_NUMBER}')
+            property('wada.build.number', '${RELEASE_BUILD_NUMBER}')
+            property('wada.build.timestamp', '${BUILD_TIMESTAMP}')
+            property('wada.build.user', '${BUILD_USER}')
+            property('build.jobName', '${JOB_NAME}')
+            property('sign.keystore','${sign.keystore}')
+            property('sign.storepass','${sign.storepass}')
+            property('sign.alias','${sign.alias}')
+            property('sign.keypass','${sign.keypass}')
+            //Same settings a adams
+            providedSettings('59d605db-7b8a-47c3-b220-6af4dc4facf0')
         }
-        httpRequest {
-            url('https://nexus.wada-ama.org/service/rest/beta/search?q=${TESTCENTER_WEB_VERSION}&repository=ADAMS-Snapshots&group=com.cgi&name=testcenter-webserver')
-            httpMode('GET')
-            authentication('5f71b8c2-4ced-45aa-9da9-014c32323dec')
-            outputFile('nexus.log')
+    }
+    publishers {
+        groovyPostBuild('''import hudson.EnvVars
+import hudson.model.Environment
+
+fileContents = manager.build.logFile.text
+def result= (fileContents =~ /Uploaded to nexus:\s.+\.ear/)
+def sonarRes = (fileContents =~ /\[INFO\] ANALYSIS SUCCESSFUL,\s.*/)
+
+if (result.getCount() != 0) {
+  dep = (result[0] =~ /http.*ear/)[0].split('/')[10]
+  vers = (result[0] =~ /http.*\.ear/)[0].split('/')[9]
+} else {
+  dep = "Error"
+  vers = "Error"
+}
+
+if (sonarRes.getCount() != 0) {
+  sonar = (sonarRes[0] =~ /http.*/)[0]
+} else {
+  sonar = "No sonar scan"
+}
+
+manager.listener.logger.println('SonarQube URL: ' + sonar)
+manager.listener.logger.println('dep: ' + dep)
+manager.listener.logger.println('vers: ' + vers)
+
+def build = Thread.currentThread().executable
+def vars = [deployPath: dep,DEPLOY_VERSION: vers,sqlVersion: "none",mobileVersion: "3.0.3.FINAL",SONAR_URL: sonar]
+build.environments.add(0, Environment.create(new EnvVars(vars)))
+''', Behavior.DoNothing)
+        git {
+            pushOnlyIfSuccess()
+            tag('origin','builds/${POM_VERSION}-${RELEASE_BUILD_NUMBER}') {
+                create()
+                message('Automated build.\n' +
+                        'Built by ${BUILD_USER}')
+            }
         }
-        shell('''
-if cat nexus.log | grep '"items" : \\[ \\],'
-then
-	echo "TESTCENTER_WEB_VERSION=${TESTCENTER_WEB_VERSION}-RELEASE" > versionfile
-    echo "NEXUS_CLASSIFIER=RELEASE" >> versionfile
-else
-	echo "TESTCENTER_WEB_VERSION=${TESTCENTER_WEB_VERSION}" > versionfile
-    echo "NEXUS_CLASSIFIER=SNAPSHOT" >> versionfile
-fi
-''')
-        environmentVariables {
-            propertiesFile('versionfile')
+        veracode {
+            applicationName('ADAMS Build')
+            criticality('Medium')
+            fileNamePattern('')
+            replacementPattern('')
+            sandboxName('')
+            scanExcludesPattern('')
+            scanIncludesPattern('')
+            scanName('ADAMS Build: $RELEASE_BUILD_NUMBER')
+            teams('')
+            uploadExcludesPattern('')
+            uploadIncludesPattern('.repository/**/*.ear')
+            vid('')
+            vkey('')
+            vpassword('')
+            vuser('')
         }
-        nexusArtifactUploader {
-            nexusVersion('nexus3')
-            protocol('https')
-            nexusUrl('nexus.wada-ama.org')
-            groupId('com.cgi')
-            version('${TESTCENTER_WEB_VERSION}-SNAPSHOT')
-            repository('ADAMS-Snapshots')
-            credentialsId('003f5c19-50c1-4ae3-a296-f23e630c2bb4')
-            artifact {
-                artifactId('testcenter-webserver')
-                type('zip')
-                classifier('${NEXUS_CLASSIFIER}')
-                file('server/testcenter-webserver.zip')
+        downstreamParameterized {
+            trigger('Create-JIRA-ticket-ADAMS') {
+                condition('SUCCESS')
+                parameters {
+                    predefinedProp('DEPLOY_VERSION', '$DEPLOY_VERSION'
+                    predefinedProp('deployPath', '$deployPath')
+                    predefinedProp('sqlVersion', '$sqlVersion')
+                    predefinedProp('mobileVersion', '$mobileVersion')
+                    predefinedProp('mobileDeployPath', '$mobileDeployPath')
+                    predefinedProp('JIRA_TICKETS', 'none')
+                    predefinedProp('PARENT_WORKSPACE', 'none')
+                    predefinedProp('ADAMSBuildNumber', '${RELEASE_BUILD_NUMBER}')
+                    predefinedProp('SONAR_URL', '$SONAR_URL')
+                }
             }
         }
     }
