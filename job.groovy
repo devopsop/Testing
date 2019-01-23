@@ -16,33 +16,7 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                         authentication('bitbucket_public_key')
                         outputFile('build$ADAMSBuildNumber.txt')                        
                     }
-                    systemGroovyCommand('''
-import groovy.json.JsonSlurper
-import hudson.EnvVars
-import hudson.model.Environment
-
-def buildn= build.buildVariableResolver.resolve("ADAMSBuildNumber")
-
-def thr = Thread.currentThread();
-def currentBuild = thr?.executable;
-def workspace = currentBuild.getModuleRoot().absolutize().toString();
-println workspace
-
-def inputFile = new File(workspace + "/build" + buildn + ".txt")
-def InputJSON = new JsonSlurper().parseText(inputFile.text)
-
-def vardeploypath = (InputJSON =~ /deployPath:\\s(.+)/)[0][1]
-def varDEPLOY_VERSION = (InputJSON =~ /DEPLOY_VERSION:\\s(.+)/)[0][1]
-def varsqlVersion = (InputJSON =~ /sqlVersion:\\s(.+)/)[0][1]
-def varmobileVersion = (InputJSON =~ /mobileVersion:\\s(.+)/)[0][1]
-def varmobileDeployPath = (InputJSON =~ /mobileDeployPath:\\s(.+)/)[0][1]
-
-def build = Thread.currentThread().executable
-
-def vars = [deployPath: vardeploypath ,DEPLOY_VERSION: varDEPLOY_VERSION ,sqlVersion: varsqlVersion ,mobileVersion: varmobileVersion,mobileDeployPath: varmobileDeployPath]
-
-build.environments.add(0, Environment.create(new EnvVars(vars)))
-''')                {
+                    systemGroovyCommand('import groovy.json.JsonSlurper\nimport hudson.EnvVars\nimport hudson.model.Environment\n\ndef buildn= build.buildVariableResolver.resolve("ADAMSBuildNumber")\n\ndef thr = Thread.currentThread();\ndef currentBuild = thr?.executable;\ndef workspace = currentBuild.getModuleRoot().absolutize().toString();\nprintln workspace\n\ndef inputFile = new File(workspace + "/build" + buildn + ".txt")\ndef InputJSON = new JsonSlurper().parseText(inputFile.text)\n\ndef vardeploypath = (InputJSON =~ /deployPath:\\s(.+)/)[0][1]\ndef varDEPLOY_VERSION = (InputJSON =~ /DEPLOY_VERSION:\\s(.+)/)[0][1]\ndef varsqlVersion = (InputJSON =~ /sqlVersion:\\s(.+)/)[0][1]\ndef varmobileVersion = (InputJSON =~ /mobileVersion:\\s(.+)/)[0][1]\ndef varmobileDeployPath = (InputJSON =~ /mobileDeployPath:\\s(.+)/)[0][1]\n\ndef build = Thread.currentThread().executable\n\ndef vars = [deployPath: vardeploypath ,DEPLOY_VERSION: varDEPLOY_VERSION ,sqlVersion: varsqlVersion ,mobileVersion: varmobileVersion,mobileDeployPath: varmobileDeployPath]\n\nbuild.environments.add(0, Environment.create(new EnvVars(vars)))') {
                         sandbox(false)
                     }  
                     downstreamParameterized {
