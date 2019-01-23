@@ -16,9 +16,8 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                         authentication('bitbucket_public_key')
                         outputFile('build$ADAMSBuildNumber.txt')                        
                     }
-                    groovyScript {
-                        sandbox(false)
-                        script("""
+                    shell('''
+echo '
 import groovy.json.JsonSlurper
 import hudson.EnvVars
 import hudson.model.Environment
@@ -37,8 +36,9 @@ def varmobileDeployPath = (InputJSON =~ /mobileDeployPath:\\s(.+)/)[0][1]
 def build = Thread.currentThread().executable
 def vars = [deployPath: vardeploypath ,DEPLOY_VERSION: varDEPLOY_VERSION ,sqlVersion: varsqlVersion ,mobileVersion: varmobileVersion,mobileDeployPath: varmobileDeployPath]
 build.environments.add(0, Environment.create(new EnvVars(vars)))
-""")
-                    }
+' > groovy.groovy
+                    ''')
+                    groovyScriptFile('groovy.groovy')                   
                     downstreamParameterized {
                         trigger('ADAMS_DEPLOY_CGI_MERGED') {
                             parameters {
