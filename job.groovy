@@ -23,6 +23,7 @@ def curJob = job('Create-JIRA-ticket-ADAMS') {
         httpRequest {
             url('https://wada-ama.atlassian.net/rest/api/2/issue/')
             httpMode('POST')
+            acceptType('APPLICATION_JSON')
             contentType('APPLICATION_JSON')
             authentication('bitbucket_public_key')
             outputFile('response.json')
@@ -33,7 +34,7 @@ def curJob = job('Create-JIRA-ticket-ADAMS') {
           "key": "WDEPLOY"
        },
        "summary": "ADAMS Build Number: ${ADAMSBuildNumber}",
-       "description": "h2. ADAMS Build: ${ADAMSBuildNumber}\n\n* deployPath: ${deployPath}\n* DEPLOY_VERSION: ${DEPLOY_VERSION}\n* sqlVersion: ${sqlVersion}\n* mobileVersion: ${mobileVersion}\n* mobileDeployPath: ${mobileDeployPath}\n* JIRA_TICKETS: ${JIRA_TICKETS}\n* PARENT_WORKSPACE: ${PARENT_WORKSPACE}\n* SonarQube URL: ${SONAR_URL}",
+       "description": "h2. ADAMS Build: ${ADAMSBuildNumber}\\n\\n* deployPath: ${deployPath}\\n* DEPLOY_VERSION: ${DEPLOY_VERSION}\\n* sqlVersion: ${sqlVersion}\\n* mobileVersion: ${mobileVersion}\\n* mobileDeployPath: ${mobileDeployPath}\\n* JIRA_TICKETS: ${JIRA_TICKETS}\\n* PARENT_WORKSPACE: ${PARENT_WORKSPACE}\\n* SonarQube URL: ${SONAR_URL}",
        "issuetype": {
           "name": "Task"
        },
