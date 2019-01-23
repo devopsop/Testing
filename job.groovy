@@ -37,7 +37,7 @@ def build = Thread.currentThread().executable
 def vars = [deployPath: vardeploypath ,DEPLOY_VERSION: varDEPLOY_VERSION ,sqlVersion: varsqlVersion ,mobileVersion: varmobileVersion,mobileDeployPath: varmobileDeployPath]
 build.environments.add(0, Environment.create(new EnvVars(vars)))
 ' > groovy.groovy
-                    ''', Behavior.MarkFailed))                 
+                    ''', Behavior.MarkFailed)                 
                     downstreamParameterized {
                         trigger('ADAMS_DEPLOY_CGI_MERGED') {
                             parameters {
