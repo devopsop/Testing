@@ -16,7 +16,7 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                         authentication('bitbucket_public_key')
                         outputFile('build$ADAMSBuildNumber.txt')                        
                     }
-                    systemGroovyCommand('Hi')       
+                    groovyCommand('Hi')       
                     downstreamParameterized {
                         trigger('ADAMS_DEPLOY_CGI_MERGED') {
                             parameters {
