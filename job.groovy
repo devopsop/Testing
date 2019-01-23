@@ -33,7 +33,7 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
         }
     }
     configure { project ->
-        project / 'properties' / 'hudson.plugins.promoted__builds.JobPropertyImpl' / 'activeProcessNames' / 'ADAMS Promotion DEV' / 'hudson.plugins.promoted__builds.PromotionProcess' / 'buildSteps') {
+        project / 'properties' / 'hudson.plugins.promoted__builds.JobPropertyImpl' / 'activeProcessNames' / 'ADAMS Promotion DEV' / 'hudson.plugins.promoted__builds.PromotionProcess' / 'buildSteps' {
             groovyScript {
                         sandbox(false)
                         script('println "hello, world"')
