@@ -32,8 +32,8 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
             }
         }
     }
-    configure { project ->
-        project / 'properties' / 'hudson.plugins.promoted__builds.JobPropertyImpl' / 'activeProcessNames' / 'ADAMS Promotion DEV' / 'hudson.plugins.promoted__builds.PromotionProcess' / 'buildSteps' << 'hudson.plugins.groovy.SystemGroovy plugin="groovy@2.0"' {
+    configure { promotion ->
+        promotion / buildSteps << 'hudson.plugins.groovy.SystemGroovy plugin="groovy@2.0"' {
             'source class="hudson.plugins.groovy.StringSystemScriptSource"' {
                 'script plugin="script-security@1.50"' {
                     sandbox(false)
