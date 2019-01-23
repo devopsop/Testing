@@ -26,7 +26,7 @@ def curJob = job('Create-JIRA-ticket-ADAMS') {
             contentType('APPLICATION_JSON')
             authentication('bitbucket_public_key')
             outputFile('response.json')
-            requestBody(JsonOutput.toJson('''{
+            requestBody('''{
     "fields": {
        "project":
        {
@@ -40,7 +40,7 @@ def curJob = job('Create-JIRA-ticket-ADAMS') {
        "components": [{"name":"ADAMS"}]
    }
 }
-'''))
+''')
         }
         shell('''JIRA_KEY=$(cat response.json | grep key \\
   | head -1 \\
