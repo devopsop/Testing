@@ -1,183 +1,66 @@
-def curJob = job('ADAMS_BUILD_CGI_MERGED') {
-    description('Job to build ADAMS for CGI integration pipeline')
+def curJob = job('Create-JIRA-ticket-ADAMS') {
+    description('Called by ADAMS Build jobs to create a JIRA Ticket')
 
     // We only keep the last 30 builds
     logRotator {
         numToKeep(30)
     }
-    authenticationToken('TtOrZzFlqIbRrzfI1YahYcUi1mxTvkwx')
 
     parameters {
-        stringParam('branch', null, 'The branch from which build the application')
-    }
-
-    scm {
-        git {
-            branch('refs/heads/${branch}')
-            remote {
-                url('https://bitbucket.wada-ama.org/scm/adams/adams-cgi.git')
-                //Credentials for the build_agent user
-                credentials('003f5c19-50c1-4ae3-a296-f23e630c2bb4')
-            }
-            extensions {
-                submoduleOptions {
-                    recursive()
-                    tracking()
-                    parentCredentials()
-                }
-            }
-        }
-    }
-
-    //this section sets the build number formatter the same way it's made for adams
-    configure { project ->
-        project / buildWrappers << 'org.jvnet.hudson.tools.versionnumber.VersionNumberBuilder' {
-            versionNumberString '${BUILD_DATE_FORMATTED,"yyDDD"}${BUILDS_TODAY,XX}'
-            projectStartDate '1969-12-31 05:00:00.0 UTC'
-            environmentVariableName 'RELEASE_BUILD_NUMBER'
-            environmentPrefixVariable
-            oBuildsToday
-            oBuildsThisWeek
-            oBuildsThisMonth
-            oBuildsThisYear
-            oBuildsAllTime
-            worstResultForIncrement 'NOT_BUILT'
-            skipFailedBuilds
-            useAsBuildDisplayName(true)
-        }
-
-    }
-
-    wrappers {
-        configFiles {
-            //Adams maven Settings
-            file('a441713c-efba-4256-b01c-2c802a45c423') {
-                targetLocation('.mvn/maven.config')
-            }
-            //JVM config
-            file('fa4c4c5b-29b3-46f1-8cd8-5b83b07f491c') {
-                targetLocation('.mvn/jvm.config')
-            }
-        }
-        credentialsBinding {
-            file('sign.keystore', 'af841b34-805b-440f-95d5-db599dafbb5d')
-            usernamePassword('na', 'sign.storepass','326fc163-7b3a-48a3-b251-eb52466d9c80')
-            usernamePassword('sign.alias', 'sign.keypass','cf02ce35-7ce5-4f37-aed2-a37073b69732')
-            usernamePassword('veracodeuser', 'veracodepw','veracode-id')
-        }
-        environmentVariables {
-            groovy('''import jenkins.util.*;
-import jenkins.model.*;
-
-def thr = Thread.currentThread();
-def currentBuild = thr?.executable;
-def workspace = currentBuild.getModuleRoot().absolutize().toString();
-
-def project = new XmlSlurper().parse(new File("$workspace/adams_superpom/pom.xml"))
-
-return [
-"POM_VERSION": project.version.toString(), 
-"POM_GROUPID": project.groupId.toString(),
-"POM_ARTIFACTID": project.artifactId.toString(),
-]''')
-        }
-        withSonarQubeEnv {
-            installationName('sonarqube')
-        }
-        buildUserVars()
+        stringParam('DEPLOY_VERSION', null, 'Version of the deployment')
+        stringParam('deployPath', null, 'Name of the .ear')
+        stringParam('sqlVersion', 'none', 'SQL Version')
+        stringParam('mobileVersion', '3.0.3.FINAL', 'Mobile Version')
+        stringParam('mobileDeployPath', 'mobile-server-3.0.3-FINAL.jar', 'Mobile Server file name')
+        stringParam('JIRA_TICKETS', 'none', 'JIRA Ticket')
+        stringParam('PARENT_WORKSPACE', null, 'Workspace')
+        stringParam('ADAMSBuildNumber', null, 'Build Number. Release')
+        stringParam('SONAR_URL', 'none', 'Sonarqube Scan URL')
+        stringParam('PARENT_NAME', 'none', 'Parent Name')
     }
 
     steps {
-        maven {
-            goals('clean')
-            goals('deploy')
-            goals('sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.branch=$branch')
-            mavenInstallation('maven 3.3.9')
-            injectBuildVariables(false)
-            localRepository(LocalRepositoryLocation.LOCAL_TO_WORKSPACE)
-            property('wada.scm.commitId', '${GIT_COMMIT}')
-            property('wada.scm.branch', '${GIT_BRANCH}')
-            property('wada.scm.tag', 'builds/${POM_VERSION}-${RELEASE_BUILD_NUMBER}')
-            property('wada.build.number', '${RELEASE_BUILD_NUMBER}')
-            property('wada.build.timestamp', '${BUILD_TIMESTAMP}')
-            property('wada.build.user', '${BUILD_USER}')
-            property('build.jobName', '${JOB_NAME}')
-            property('sign.keystore','${sign.keystore}')
-            property('sign.storepass','${sign.storepass}')
-            property('sign.alias','${sign.alias}')
-            property('sign.keypass','${sign.keypass}')
-            //Same settings a adams
-            providedSettings('59d605db-7b8a-47c3-b220-6af4dc4facf0')
+        httpRequest {
+            url('https://wada-ama.atlassian.net/rest/api/2/issue/')
+            httpMode('POST')
+            contentType('APPLICATION_JSON')
+            authentication('bitbucket_public_key')
+            outputFile('response.json')
+            requestBody(JsonOutput.toJson('''{
+    "fields": {
+       "project":
+       {
+          "key": "WDEPLOY"
+       },
+       "summary": "ADAMS Build Number: ${ADAMSBuildNumber}",
+       "description": "h2. ADAMS Build: ${ADAMSBuildNumber}\n\n* deployPath: ${deployPath}\n* DEPLOY_VERSION: ${DEPLOY_VERSION}\n* sqlVersion: ${sqlVersion}\n* mobileVersion: ${mobileVersion}\n* mobileDeployPath: ${mobileDeployPath}\n* JIRA_TICKETS: ${JIRA_TICKETS}\n* PARENT_WORKSPACE: ${PARENT_WORKSPACE}\n* SonarQube URL: ${SONAR_URL}",
+       "issuetype": {
+          "name": "Task"
+       },
+       "components": [{"name":"ADAMS"}]
+   }
+}
+'''))
+        }
+        shell('''JIRA_KEY=$(cat response.json | grep key \\
+  | head -1 \\
+  | awk -F, '{ print $2 }' \\
+  | awk -F: '{ print $2 }' \\
+  | sed 's/[",]//g' \\
+  | tr -d '[[:space:]]')
+echo "JIRA_KEY=${JIRA_KEY}" > jirakey
+echo "JIRA ISSUE URL: https://wada-ama.atlassian.net/browse/${JIRA_KEY}" ''')
+        environmentVariables {
+            propertiesFile('jirakey')
         }
     }
     publishers {
-        groovyPostBuild('''import hudson.EnvVars
-import hudson.model.Environment
-
-fileContents = manager.build.logFile.text
-def result= (fileContents =~ /Uploaded to nexus:\\s.+\\.ear/)
-def sonarRes = (fileContents =~ /\\[INFO\\] ANALYSIS SUCCESSFUL,\\s.*/)
-
-if (result.getCount() != 0) {
-  dep = (result[0] =~ /http.*\\.ear/)[0].split('/')[10]
-  vers = (result[0] =~ /http.*\\.ear/)[0].split('/')[9]
-} else {
-  dep = "Error"
-  vers = "Error"
-}
-
-if (sonarRes.getCount() != 0) {
-  sonar = (sonarRes[0] =~ /http.*/)[0]
-} else {
-  sonar = "No sonar scan"
-}
-
-manager.listener.logger.println('SonarQube URL: ' + sonar)
-manager.listener.logger.println('dep: ' + dep)
-manager.listener.logger.println('vers: ' + vers)
-
-def build = Thread.currentThread().executable
-def vars = [deployPath: dep,DEPLOY_VERSION: vers,sqlVersion: "none",mobileVersion: "3.0.3.FINAL",SONAR_URL: sonar]
-build.environments.add(0, Environment.create(new EnvVars(vars)))
-''', Behavior.DoNothing)
-        git {
-            pushOnlyIfSuccess()
-            tag('origin','builds/${POM_VERSION}-${RELEASE_BUILD_NUMBER}') {
-                create()
-                message('Automated build.\n' +
-                        'Built by ${BUILD_USER}')
-            }
-        }
-        veracode {
-            applicationName('ADAMS Build')
-            criticality('Medium')
-            fileNamePattern('')
-            replacementPattern('')
-            sandboxName('')
-            scanExcludesPattern('')
-            scanIncludesPattern('')
-            scanName('ADAMS Build: $RELEASE_BUILD_NUMBER')
-            teams('')
-            uploadExcludesPattern('')
-            uploadIncludesPattern('.repository/**/*.ear')
-            vid('')
-            vkey('')
-            vpassword('$veracodepw')
-            vuser('$veracodeuser')
-        }
         downstreamParameterized {
-            trigger('Create-JIRA-ticket-ADAMS') {
+            trigger('ADAMS-PROMOTIONS-TEST-DEVOPS,ADAMS-PROMOTIONS-FUNCTIONAL-DEVOPS,ADAMS-PROMOTIONS-PREPROD-DEVOPS,ADAMS-PROMOTIONS-PROD-DEVOPS,ADAMS-PROMOTIONS-DEV-DEVOPS,ADAMS-PROMOTIONS-FUNCTIONAL2-DEVOPS,ADAMS-PROMOTIONS-TEST-NG-DEVOPS') {
                 condition('SUCCESS')
                 parameters {
-                    predefinedProp('DEPLOY_VERSION', '$DEPLOY_VERSION')
-                    predefinedProp('deployPath', '$deployPath')
-                    predefinedProp('sqlVersion', '$sqlVersion')
-                    predefinedProp('mobileVersion', '$mobileVersion')
-                    predefinedProp('mobileDeployPath', '$mobileDeployPath')
-                    predefinedProp('JIRA_TICKETS', 'none')
-                    predefinedProp('PARENT_WORKSPACE', 'none')
-                    predefinedProp('ADAMSBuildNumber', '${RELEASE_BUILD_NUMBER}')
-                    predefinedProp('SONAR_URL', '$SONAR_URL')
+                    predefinedProp('ADAMSBuildNumber', '${ADAMSBuildNumber}')
+                    predefinedProp('JIRA_KEY', '${JIRA_KEY}')
                 }
             }
         }
