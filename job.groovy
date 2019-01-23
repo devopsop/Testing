@@ -1,70 +1,69 @@
-def curJob = job('Create-JIRA-ticket-ADAMS') {
-    description('Called by ADAMS Build jobs to create a JIRA Ticket')
+def curJob = job('ADAMS_DEPLOY_CGI') {
+    properties {
+        promotions {
+            promotion {
+                name('ADAMS Promotion DEV')
+                icon('Green star')
+                conditions {
+                    manual('ACL_CDCI_deploy_CH,ACL_CDCI_deploy_QA,ACL_CDCI_deploy_ADMIN')
+                }
+                actions {
+                    httpRequest {
+                        url('https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description')
+                        httpMode('GET')
+                        acceptType('APPLICATION_JSON')
+                        contentType('APPLICATION_JSON')
+                        authentication('bitbucket_public_key')
+                        outputFile('build$ADAMSBuildNumber.txt')                        
+                    }
+                    groovyScript {
+                        sandbox(false)
+                        script('''
+import groovy.json.JsonSlurper
+import hudson.EnvVars
+import hudson.model.Environment
 
-    // We only keep the last 30 builds
-    logRotator {
-        numToKeep(30)
-    }
+def buildn= build.buildVariableResolver.resolve("ADAMSBuildNumber")
 
-    parameters {
-        stringParam('DEPLOY_VERSION', null, 'Version of the deployment')
-        stringParam('deployPath', null, 'Name of the .ear')
-        stringParam('sqlVersion', 'none', 'SQL Version')
-        stringParam('mobileVersion', '3.0.3.FINAL', 'Mobile Version')
-        stringParam('mobileDeployPath', 'mobile-server-3.0.3-FINAL.jar', 'Mobile Server file name')
-        stringParam('JIRA_TICKETS', 'none', 'JIRA Ticket')
-        stringParam('PARENT_WORKSPACE', null, 'Workspace')
-        stringParam('ADAMSBuildNumber', null, 'Build Number. Release')
-        stringParam('SONAR_URL', 'none', 'Sonarqube Scan URL')
-        stringParam('PARENT_NAME', 'none', 'Parent Name')
-    }
+def thr = Thread.currentThread();
+def currentBuild = thr?.executable;
+def workspace = currentBuild.getModuleRoot().absolutize().toString();
+println workspace
 
-    steps {
-        httpRequest {
-            url('https://wada-ama.atlassian.net/rest/api/2/issue/')
-            httpMode('POST')
-            acceptType('APPLICATION_JSON')
-            contentType('APPLICATION_JSON')
-            authentication('bitbucket_public_key')
-            outputFile('response.json')
-            requestBody('''{
-    "fields": {
-       "project":
-       {
-          "key": "WDEPLOY"
-       },
-       "summary": "ADAMS Build Number: ${ADAMSBuildNumber}",
-       "description": "h2. ADAMS Build: ${ADAMSBuildNumber}\\n\\n* deployPath: ${deployPath}\\n* DEPLOY_VERSION: ${DEPLOY_VERSION}\\n* sqlVersion: ${sqlVersion}\\n* mobileVersion: ${mobileVersion}\\n* mobileDeployPath: ${mobileDeployPath}\\n* JIRA_TICKETS: ${JIRA_TICKETS}\\n* PARENT_WORKSPACE: ${PARENT_WORKSPACE}\\n* SonarQube URL: ${SONAR_URL}",
-       "issuetype": {
-          "name": "Task"
-       },
-       "components": [{"name":"ADAMS"}]
-   }
-}
+def inputFile = new File(workspace + "/build" + buildn + ".txt")
+def InputJSON = new JsonSlurper().parseText(inputFile.text)
+
+def vardeploypath = (InputJSON =~ /deployPath:\\s(.+)/)[0][1]
+def varDEPLOY_VERSION = (InputJSON =~ /DEPLOY_VERSION:\\s(.+)/)[0][1]
+def varsqlVersion = (InputJSON =~ /sqlVersion:\\s(.+)/)[0][1]
+def varmobileVersion = (InputJSON =~ /mobileVersion:\\s(.+)/)[0][1]
+def varmobileDeployPath = (InputJSON =~ /mobileDeployPath:\\s(.+)/)[0][1]
+
+def build = Thread.currentThread().executable
+
+def vars = [deployPath: vardeploypath ,DEPLOY_VERSION: varDEPLOY_VERSION ,sqlVersion: varsqlVersion ,mobileVersion: varmobileVersion,mobileDeployPath: varmobileDeployPath]
+
+build.environments.add(0, Environment.create(new EnvVars(vars)))
 ''')
-        }
-        shell('''JIRA_KEY=$(cat response.json | grep key \\
-  | head -1 \\
-  | awk -F, '{ print $2 }' \\
-  | awk -F: '{ print $2 }' \\
-  | sed 's/[",]//g' \\
-  | tr -d '[[:space:]]')
-echo "JIRA_KEY=${JIRA_KEY}" > jirakey
-echo "JIRA ISSUE URL: https://wada-ama.atlassian.net/browse/${JIRA_KEY}" ''')
-        environmentVariables {
-            propertiesFile('jirakey')
-        }
-    }
-    publishers {
-        downstreamParameterized {
-            trigger('ADAMS-PROMOTIONS-TEST-DEVOPS,ADAMS-PROMOTIONS-FUNCTIONAL-DEVOPS,ADAMS-PROMOTIONS-PREPROD-DEVOPS,ADAMS-PROMOTIONS-PROD-DEVOPS,ADAMS-PROMOTIONS-DEV-DEVOPS,ADAMS-PROMOTIONS-FUNCTIONAL2-DEVOPS,ADAMS-PROMOTIONS-TEST-NG-DEVOPS') {
-                condition('SUCCESS')
-                parameters {
-                    predefinedProp('ADAMSBuildNumber', '${ADAMSBuildNumber}')
-                    predefinedProp('JIRA_KEY', '${JIRA_KEY}')
+                    }
+                    downstreamParameterized {
+                        trigger('ADAMS_DEPLOY_CGI_MERGED') {
+                            parameters {
+                                predefinedProp('DEPLOY_VERSION', '$DEPLOY_VERSION')
+                                predefinedProp('deployPath', '$deployPath')
+                                predefinedProp('sqlVersion', '$sqlVersion')
+                                predefinedProp('mobileVersion', '$mobileVersion')
+                                predefinedProp('mobileDeployPath', '$mobileDeployPath')
+                                predefinedProp('JIRA_KEY', '${JIRA_KEY}')
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-
+    parameters {
+        stringParam('ADAMSBuildNumber', null, 'Displayed Build Number')
+        stringParam('JIRA_KEY', 'none', 'JIRA Key for Build')
+    }
 }
