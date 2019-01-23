@@ -1,4 +1,4 @@
-def curJob = job('ADAMS_DEPLOY_CGI') {
+def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
     properties {
         promotions {
             promotion {
@@ -16,9 +16,7 @@ def curJob = job('ADAMS_DEPLOY_CGI') {
                         authentication('bitbucket_public_key')
                         outputFile('build$ADAMSBuildNumber.txt')                        
                     }
-                    groovyScript {
-                        sandbox(false)
-                        script('''
+                    groovyScriptFile('''
 import groovy.json.JsonSlurper
 import hudson.EnvVars
 import hudson.model.Environment
@@ -44,8 +42,7 @@ def build = Thread.currentThread().executable
 def vars = [deployPath: vardeploypath ,DEPLOY_VERSION: varDEPLOY_VERSION ,sqlVersion: varsqlVersion ,mobileVersion: varmobileVersion,mobileDeployPath: varmobileDeployPath]
 
 build.environments.add(0, Environment.create(new EnvVars(vars)))
-''')
-                    }
+''')                 
                     downstreamParameterized {
                         trigger('ADAMS_DEPLOY_CGI_MERGED') {
                             parameters {
