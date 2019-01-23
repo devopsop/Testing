@@ -15,8 +15,7 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                         contentType('APPLICATION_JSON')
                         authentication('bitbucket_public_key')
                         outputFile('build$ADAMSBuildNumber.txt')                        
-                    }
-                    groovyPostBuild('println "hello, world"', Behavior.MarkFailed)                 
+                    }               
                     downstreamParameterized {
                         trigger('ADAMS_DEPLOY_CGI_MERGED') {
                             parameters {
@@ -33,9 +32,17 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
             }
         }
     }
+    configure { project ->
+        project / 'properties' / 'hudson.plugins.promoted__builds.JobPropertyImpl' / 'activeProcessNames' / 'ADAMS Promotion DEV' / 'hudson.plugins.promoted__builds.PromotionProcess' / 'buildSteps') {
+            groovyScript {
+                        sandbox(false)
+                        script('println "hello, world"')
+            }
+        }
+    }
+
     parameters {
         stringParam('ADAMSBuildNumber', null, 'Displayed Build Number')
         stringParam('JIRA_KEY', 'none', 'JIRA Key for Build')
     }
 }
-
