@@ -1,48 +1,7 @@
 def curJob = job('ADAMS_DEPLOY_CGI_MERGED') {
 
     parameters {
-        extensibleChoiceParameterDefinition {
-            name('DEPLOY_VERSION')
-            description('Adams version to be deployed')
-            editable(true)
-            choiceListProvider {
-                systemGroovyChoiceListProvider {
-                    defaultChoice("")
-                    usePredefinedVariables(false)
-                    groovyScript {
-                        sandbox(false)
-                        script("""
-import java.util.regex.*;
-import java.io.*;
-import java.net.URLEncoder;
-
-def getUserPassword = { username ->
-    def creds = com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials(
-            com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials.class,
-            jenkins.model.Jenkins.instance
-    )
-
-    def c = creds.findResult { it.username == username ? it : null }
-    if ( c ) {
-        return c.password.toString()
-    } else {
-        println "could not find credential for \\${username}"
-    }
-}
-
-def username = "wadacdci"
-def pass = java.net.URLEncoder.encode(getUserPassword(username), "UTF-8")
-def sout = new StringBuilder(), serr = new StringBuilder()
-def proc = ['/bin/bash', '-c', "git ls-remote --tags https://\\${username}:\\${pass}@bitbucket.wada-ama.org/scm/adams/adams.git builds/* | awk '\\\\\\${2} !~ /\\\\\\\\^\\\\\\\\{\\\\\\\\}/ && sub(\\\\\\"refs/tags/builds/\\\\",\\\\"\\\\",\\\\\\${2}) {print \\\\\\${2}}'"].execute()
-proc.consumeProcessOutput(sout, serr)
-proc.waitForOrKill(1000)
-println("\\${serr}");
-return "\\${sout}".tokenize().reverse()
-""")
-                    }
-                }
-            }
-        }
+        stringParam('DEPLOY_VERSION', '6.5.0-SNAPSHOT', 'Adams version to be deployed')
         stringParam('deployPath', 'adams.ear', 'path of the adams.ear')
         stringParam('mobileVersion', '3.0.3.FINAL', 'Mobile Version to deploy')
         stringParam('mobileDeployPath', 'mobile-server-3.0.3-FINAL.jar', 'Mobile Version to deploy')
