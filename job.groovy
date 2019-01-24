@@ -8,12 +8,6 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                     manual('ACL_CDCI_deploy_CH,ACL_CDCI_deploy_QA,ACL_CDCI_deploy_ADMIN')
                 }
                 actions {
-                    httpRequest {
-                        url('https://www.google.ca/')
-                        httpMode('GET')
-                        authentication('bitbucket_public_key')
-                        outputFile('jira.json')
-                    }
                     shell('''
 deployPath=$(grep -Po 'deployPath:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
 DEPLOY_VERSION=$(grep -Po 'DEPLOY_VERSION:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
@@ -27,6 +21,12 @@ echo "sqlVersion=${sqlVersion}" >> varfile
 echo "mobileVersion=${mobileVersion}" >> varfile
 echo "mobileDeployPath=${mobileDeployPath}" >> varfile
                     ''')
+                    httpRequest {
+                        url('https://www.google.ca/')
+                        httpMode('GET')
+                        authentication('bitbucket_public_key')
+                        outputFile('jira.json')
+                    }
                     environmentVariables {
                         propertiesFile('varfile')
                     }
