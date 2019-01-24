@@ -150,19 +150,19 @@ build.environments.add(0, Environment.create(new EnvVars(vars)))
 
         configure { project ->
             project / publishers << 'com.veracode.jenkins.plugin.VeracodeNotifier' {
-                __appname {AQAAABAAAAAQT6CZKqhS14tw7OQ54Gchrb8yngW8GRfTWp5H5QWTxa4=}
+                __appname '{AQAAABAAAAAQT6CZKqhS14tw7OQ54Gchrb8yngW8GRfTWp5H5QWTxa4=}'
                 __createprofile false
-                __teams {AQAAABAAAAAQQ6T3cGmnRYN9WdVlFQ++IU4KbwGVFk9gMQfCDn3rr0Y=}
-                __criticality {AQAAABAAAAAQ0OaL7f4s+Q+1wrzb/6rqaQVoKusZX19/q5VfnH78KtM=}
-                __sandboxname {AQAAABAAAAAQIJOQAk32U5YmcnEigLig20gwsN68TLBXEkv6Sm6260U=}
+                __teams '{AQAAABAAAAAQQ6T3cGmnRYN9WdVlFQ++IU4KbwGVFk9gMQfCDn3rr0Y=}'
+                __criticality '{AQAAABAAAAAQ0OaL7f4s+Q+1wrzb/6rqaQVoKusZX19/q5VfnH78KtM=}'
+                __sandboxname '{AQAAABAAAAAQIJOQAk32U5YmcnEigLig20gwsN68TLBXEkv6Sm6260U=}'
                 __createsandbox false
-                __version {AQAAABAAAAAw+33Du1SLpsvVkFojd7L8ZTnY8bufOn29AUvqoGu77fS2dcJ2ERYOv3uB+stuBmDMcimqd5OSNUsRVN4Wrmju3w==}
-                __uploadincludespattern {AQAAABAAAAAgdzBLH6jdNESZJnUU0+GR6ZQVhZDHbjPkQbzUPLUMBuD2TUUti3OEtVoSAhTFD1dd}
-                __uploadexcludespattern {AQAAABAAAAAQIe9LLjJzVQvc5wZZxmhi2tZtjjLTvtGVPh7AFoJQ9k0=}
-                __scanincludespattern {AQAAABAAAAAQvKdZ9wsnaTatTRnwasCNwhe0w8bUdLKycxBHIBMWhRw=}
-                __scanexcludespattern {AQAAABAAAAAQmGgleIptpYg+OEUTPL2yb7nHfEJ7sej3jbwvG66Rg4U=}
-                __filenamepattern {AQAAABAAAAAQKCvW5cU0GZGAzJ7aox5k81QmMrDkxnNNbKs/eLnt1qU=}
-                __replacementpattern {AQAAABAAAAAQACPFBUq2nrq3CnMthjeTKIxpZyGpACtLiiEWxcWfX8U=}
+                __version '{AQAAABAAAAAw+33Du1SLpsvVkFojd7L8ZTnY8bufOn29AUvqoGu77fS2dcJ2ERYOv3uB+stuBmDMcimqd5OSNUsRVN4Wrmju3w==}'
+                __uploadincludespattern '{AQAAABAAAAAgdzBLH6jdNESZJnUU0+GR6ZQVhZDHbjPkQbzUPLUMBuD2TUUti3OEtVoSAhTFD1dd}'
+                __uploadexcludespattern '{AQAAABAAAAAQIe9LLjJzVQvc5wZZxmhi2tZtjjLTvtGVPh7AFoJQ9k0=}'
+                __scanincludespattern '{AQAAABAAAAAQvKdZ9wsnaTatTRnwasCNwhe0w8bUdLKycxBHIBMWhRw=}'
+                __scanexcludespattern '{AQAAABAAAAAQmGgleIptpYg+OEUTPL2yb7nHfEJ7sej3jbwvG66Rg4U=}'
+                __filenamepattern '{AQAAABAAAAAQKCvW5cU0GZGAzJ7aox5k81QmMrDkxnNNbKs/eLnt1qU=}'
+                __replacementpattern '{AQAAABAAAAAQACPFBUq2nrq3CnMthjeTKIxpZyGpACtLiiEWxcWfX8U=}'
                 __waitforscan false
             }
         }
