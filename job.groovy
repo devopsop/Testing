@@ -29,9 +29,9 @@ echo "sqlVersion=${sqlVersion}" >> varfile
 echo "mobileVersion=${mobileVersion}" >> varfile
 echo "mobileDeployPath=${mobileDeployPath}" >> varfile
                     ''')
-                    environmentVariables {
-                        propertiesFile('varfile')
-                    }
+                    //environmentVariables {
+                    //    propertiesFile('varfile')
+                    //}
                     downstreamParameterized {
                         trigger('ADAMS_DEPLOY_CGI_MERGED') {
                             parameters {
