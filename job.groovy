@@ -41,17 +41,27 @@ echo "mobileDeployPath=${mobileDeployPath}" >> varfile
         }
     }
 
+    configure { promotion ->
+        promotion / buildSteps << 'jenkins.plugins.http__request.HttpRequest' {
+            url('https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description')
+            httpMode('GET')
+            passBuildParameters(false)
+            ignoreSslErrors(false)
+            validResponseCodes('100:399')
+            timeout(0)
+            acceptType('APPLICATION_JSON')
+            contentType('APPLICATION_JSON')
+            authentication('bitbucket_public_key')
+            outputFile('jira.json')
+        }
+    }
+
     parameters {
         stringParam('ADAMSBuildNumber', null, 'Displayed Build Number')
         stringParam('JIRA_KEY', 'none', 'JIRA Key for Build')
     }
 
     steps {
-        httpRequest('https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description') {
-            httpMode('GET')
-            authentication('bitbucket_public_key')
-            logResponseBody(true)
-            passBuildParameters(true)
-        }
+        shell('echo "Ready to deploy in CGI"')
     }
 }
