@@ -60,7 +60,7 @@ echo deploying in CGI
 echo JIRA_ISSUES=$JIRA_TICKETS > env.properties
 echo ADAMS_VERSION=$DEPLOY_VERSION >> env.properties
 #echo mobileDeployPath=mobile-server-$mobileVersion.jar >> env.properties
-sed  -e "s/\\(JIRA_ISSUES=\\)/\\1issueKey=/" -e "s/ \\(ADAMS-[0-9]\\{4\}\\)/ or issuekey=\\1/g" -i env.properties
+sed  -e "s/\\(JIRA_ISSUES=\\)/\\1issueKey=/" -e "s/ \\(ADAMS-[0-9]\\{4\\}\\)/ or issuekey=\\1/g" -i env.properties
 sed -e "s/\\(^ADAMS_VERSION=[0-9.]*-[A-Z]*\\)-[0-9]*/\\1/g" -i env.properties
         ''')
         environmentVariables {
