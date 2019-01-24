@@ -9,24 +9,14 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                 }
                 actions {
                     shell('''
-deployPath=$(grep -Po 'deployPath:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
-DEPLOY_VERSION=$(grep -Po 'DEPLOY_VERSION:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
-sqlVersion=$(grep -Po 'sqlVersion:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
-mobileVersion=$(grep -Po 'mobileVersion:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
-mobileDeployPath=$(grep -Po 'mobileDeployPath:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
+curl -XGET "https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description" -u ${jirauser}:${jirapw} > jira.json
 
-echo "deployPath=${deployPath}" > varfile
-echo "DEPLOY_VERSION=${DEPLOY_VERSION}" >> varfile
-echo "sqlVersion=${sqlVersion}" >> varfile
-echo "mobileVersion=${mobileVersion}" >> varfile
-echo "mobileDeployPath=${mobileDeployPath}" >> varfile
+echo "deployPath=$(grep -Po 'deployPath:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)" > varfile
+echo "DEPLOY_VERSION=$(grep -Po 'DEPLOY_VERSION:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)" >> varfile
+echo "sqlVersion=$(grep -Po 'sqlVersion:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)" >> varfile
+echo "mobileVersion=$(grep -Po 'mobileVersion:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)" >> varfile
+echo "mobileDeployPath=$(grep -Po 'mobileDeployPath:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)" >> varfile
                     ''')
-                    httpRequest {
-                        url('https://www.google.ca/')
-                        httpMode('GET')
-                        authentication('bitbucket_public_key')
-                        outputFile('jira.json')
-                    }
                     environmentVariables {
                         propertiesFile('varfile')
                     }
@@ -47,6 +37,10 @@ echo "mobileDeployPath=${mobileDeployPath}" >> varfile
         }
     }
 
+    wrappers {
+        credentialsBinding {
+            usernamePassword('jirauser', 'jirapw','bitbucket_public_key')
+        }
     parameters {
         stringParam('ADAMSBuildNumber', null, 'Displayed Build Number')
         stringParam('JIRA_KEY', 'none', 'JIRA Key for Build')
