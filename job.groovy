@@ -41,6 +41,8 @@ echo "mobileDeployPath=$(grep -Po 'mobileDeployPath:\\s.*?\\\\n' jira.json | cut
         credentialsBinding {
             usernamePassword('jirauser', 'jirapw','bitbucket_public_key')
         }
+    }
+    
     parameters {
         stringParam('ADAMSBuildNumber', null, 'Displayed Build Number')
         stringParam('JIRA_KEY', 'none', 'JIRA Key for Build')
