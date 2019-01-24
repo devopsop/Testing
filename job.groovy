@@ -8,12 +8,6 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                     manual('ACL_CDCI_deploy_CH,ACL_CDCI_deploy_QA,ACL_CDCI_deploy_ADMIN')
                 }
                 actions {
-                    httpRequest('https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description') {
-                        httpMode('GET')
-                        authentication('bitbucket_public_key')
-                        logResponseBody(true)
-                        passBuildParameters(true)
-                    }
                     shell('''
 deployPath=$(grep -Po 'deployPath:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
 DEPLOY_VERSION=$(grep -Po 'DEPLOY_VERSION:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
@@ -50,5 +44,14 @@ echo "mobileDeployPath=${mobileDeployPath}" >> varfile
     parameters {
         stringParam('ADAMSBuildNumber', null, 'Displayed Build Number')
         stringParam('JIRA_KEY', 'none', 'JIRA Key for Build')
+    }
+
+    steps {
+        httpRequest('https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description') {
+            httpMode('GET')
+            authentication('bitbucket_public_key')
+            logResponseBody(true)
+            passBuildParameters(true)
+        }
     }
 }
