@@ -8,15 +8,6 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                     manual('ACL_CDCI_deploy_CH,ACL_CDCI_deploy_QA,ACL_CDCI_deploy_ADMIN')
                 }
                 actions {
-                    httpRequest {
-                        url('https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description')
-                        httpMode('GET')
-                        acceptType('APPLICATION_JSON')
-                        contentType('APPLICATION_JSON')
-                        authentication('bitbucket_public_key')
-                        outputFile('build$ADAMSBuildNumber.txt')                        
-                    }    
- 
                     downstreamParameterized {
                         trigger('ADAMS_DEPLOY_CGI_MERGED') {
                             parameters {
@@ -37,5 +28,10 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
     parameters {
         stringParam('ADAMSBuildNumber', null, 'Displayed Build Number')
         stringParam('JIRA_KEY', 'none', 'JIRA Key for Build')
+    }
+
+    steps {
+        shell("echo Ready to deploy in test")
+        shell("")
     }
 }
