@@ -8,6 +8,14 @@ def curJob = job('ADAMS-PROMOTIONS-DEV-DEVOPS') {
                     manual('ACL_CDCI_deploy_CH,ACL_CDCI_deploy_QA,ACL_CDCI_deploy_ADMIN')
                 }
                 actions {
+                    httpRequest {
+                        url('https://wada-ama.atlassian.net/rest/api/2/search?jql=id=${JIRA_KEY}&fields=description')
+                        httpMode('GET')
+                        acceptType('APPLICATION_JSON')
+                        contentType('APPLICATION_JSON')
+                        authentication('bitbucket_public_key')
+                        outputFile('response.json')
+                    }
                     shell('''
 deployPath=$(grep -Po 'deployPath:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
 DEPLOY_VERSION=$(grep -Po 'DEPLOY_VERSION:\\s.*?\\\\n' jira.json | cut -d' ' -f2 | cut -d'\\' -f1)
