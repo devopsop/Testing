@@ -26,7 +26,7 @@ def getUserPassword = { username ->
     if ( c ) {
         return c.password.toString()
     } else {
-        println "could not find credential for \$username"
+        println "could not find credential for \\${username}"
     }
 }
 
